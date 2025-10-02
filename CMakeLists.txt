@@ -4,6 +4,9 @@ project(ClientServerApp)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+# Добавляем директорию с заголовочными файлами
+include_directories(include)
+
 # Настройка для Windows
 if(WIN32)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -lws2_32")

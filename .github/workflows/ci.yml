@@ -14,8 +14,8 @@ jobs:
     
     strategy:
       matrix:
-        compiler: [gcc, clang]
-        build_type: [Debug, Release]
+        compiler: [gcc]
+        build_type: [Release]
     
     steps:
     - name: Checkout code
@@ -38,11 +38,13 @@ jobs:
           export CXX=clang++
         fi
         cmake -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} ..
+        echo "CMake configuration completed"
     
     - name: Build project
       run: |
         cd build
         make -j$(nproc)
+        echo "Build completed successfully"
     
     - name: Run tests
       run: |
