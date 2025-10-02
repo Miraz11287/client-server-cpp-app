@@ -1,0 +1,85 @@
+name: Create Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  create-release:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y build-essential cmake
+    
+    - name: Build project
+      run: |
+        mkdir build
+        cd build
+        cmake -DCMAKE_BUILD_TYPE=Release ..
+        make -j$(nproc)
+    
+    - name: Generate documentation
+      run: |
+        chmod +x scripts/generate_docs.sh
+        ./scripts/generate_docs.sh
+    
+    - name: Create release archive
+      run: |
+        mkdir -p dist
+        tar -czf dist/client-server-app-${{ github.ref_name }}.tar.gz \
+          --exclude=build \
+          --exclude=.git \
+          --exclude=dist \
+          --exclude=.github \
+          .
+    
+    - name: Create Release
+      uses: softprops/action-gh-release@v1
+      with:
+        tag_name: ${{ github.ref_name }}
+        name: Release ${{ github.ref_name }}
+        body: |
+          ## 🚀 Релиз ${{ github.ref_name }}
+          
+          ### 📦 Что включено:
+          - Полнофункциональное клиент-серверное приложение на C++
+          - Docker контейнеризация
+          - Подробная документация
+          - Тест-кейсы и описание дефектов
+          
+          ### 🔧 Установка:
+          1. Скачайте архив `client-server-app-${{ github.ref_name }}.tar.gz`
+          2. Распакуйте: `tar -xzf client-server-app-${{ github.ref_name }}.tar.gz`
+          3. Соберите проект: `make build`
+          4. Запустите сервер: `make server`
+          5. Запустите клиент: `make client`
+          
+          ### 🐳 Docker:
+          ```bash
+          docker build -t client-server-app .
+          docker-compose up
+          ```
+          
+          ### 📚 Документация:
+          - [API документация](https://miraz11287.github.io/client-server-cpp-app/)
+          - [Диаграммы классов](docs/class_diagram.md)
+          - [Тест-кейсы](tests/test_cases.md)
+          
+          ### 🐛 Известные проблемы:
+          См. [список дефектов](tests/defects.md)
+          
+          ### 📝 Changelog:
+          См. [CHANGELOG.md](CHANGELOG.md)
+        files: |
+          dist/client-server-app-${{ github.ref_name }}.tar.gz
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

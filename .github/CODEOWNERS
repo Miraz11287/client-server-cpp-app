@@ -1,0 +1,29 @@
+# Владельцы кода для клиент-серверного приложения
+# Эти люди будут автоматически запрашиваться для ревью при изменении соответствующих файлов
+
+# Глобальные владельцы
+* @Miraz11287
+
+# Исходный код
+/src/ @Miraz11287
+/include/ @Miraz11287
+
+# Конфигурация сборки
+CMakeLists.txt @Miraz11287
+Makefile @Miraz11287
+
+# Docker
+Dockerfile @Miraz11287
+docker-compose.yml @Miraz11287
+.dockerignore @Miraz11287
+
+# Документация
+README.md @Miraz11287
+docs/ @Miraz11287
+Doxyfile @Miraz11287
+
+# Тесты
+tests/ @Miraz11287
+
+# GitHub конфигурация
+.github/ @Miraz11287

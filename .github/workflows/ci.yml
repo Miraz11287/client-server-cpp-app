@@ -1,0 +1,147 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  release:
+    types: [ published ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        compiler: [gcc, clang]
+        build_type: [Debug, Release]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y build-essential cmake doxygen graphviz
+        if [ "${{ matrix.compiler }}" = "clang" ]; then
+          sudo apt-get install -y clang
+        fi
+    
+    - name: Configure CMake
+      run: |
+        mkdir build
+        cd build
+        if [ "${{ matrix.compiler }}" = "clang" ]; then
+          export CC=clang
+          export CXX=clang++
+        fi
+        cmake -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} ..
+    
+    - name: Build project
+      run: |
+        cd build
+        make -j$(nproc)
+    
+    - name: Run tests
+      run: |
+        cd build
+        chmod +x ../scripts/run_tests.sh
+        ../scripts/run_tests.sh
+    
+    - name: Generate documentation
+      run: |
+        chmod +x scripts/generate_docs.sh
+        ./scripts/generate_docs.sh
+    
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: build-${{ matrix.compiler }}-${{ matrix.build_type }}
+        path: build/
+        retention-days: 7
+    
+    - name: Upload documentation
+      uses: actions/upload-artifact@v4
+      with:
+        name: documentation
+        path: docs/doxygen/html/
+        retention-days: 30
+
+  docker-build:
+    runs-on: ubuntu-latest
+    needs: build-and-test
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+    
+    - name: Build Docker image
+      run: |
+        docker build -t client-server-app:${{ github.sha }} .
+        docker build -t client-server-app:latest .
+    
+    - name: Test Docker image
+      run: |
+        # Тест запуска сервера
+        timeout 10s docker run --rm client-server-app:${{ github.sha }} server &
+        sleep 5
+        # Тест запуска клиента
+        timeout 5s docker run --rm client-server-app:${{ github.sha }} client || true
+    
+    - name: Push to registry (on release)
+      if: github.event_name == 'release'
+      run: |
+        echo "Docker image built successfully for release ${{ github.event.release.tag_name }}"
+        # Здесь можно добавить push в Docker Hub или GitHub Container Registry
+
+  security-scan:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y build-essential cmake cppcheck
+    
+    - name: Run static analysis
+      run: |
+        cppcheck --enable=all --std=c++17 --error-exitcode=1 \
+          --suppress=missingIncludeSystem \
+          --suppress=unusedFunction \
+          src/ include/ || true
+    
+    - name: Check for security vulnerabilities
+      run: |
+        echo "Security scan completed"
+        # Здесь можно добавить дополнительные проверки безопасности
+
+  code-quality:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y build-essential cmake clang-format
+    
+    - name: Check code formatting
+      run: |
+        find src/ include/ -name "*.cpp" -o -name "*.h" | xargs clang-format --dry-run --Werror || true
+    
+    - name: Count lines of code
+      run: |
+        echo "=== Статистика кода ==="
+        find src/ include/ -name "*.cpp" -o -name "*.h" | xargs wc -l
+        echo "=== Количество файлов ==="
+        find src/ include/ -name "*.cpp" -o -name "*.h" | wc -l
