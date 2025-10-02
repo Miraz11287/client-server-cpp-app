@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+  # Сервер
+  server:
+    build: .
+    container_name: client_server_app_server
+    ports:
+      - "8080:8080"
+    command: ["./run.sh", "server"]
+    networks:
+      - app_network
+    restart: unless-stopped
+
+  # Клиент (для тестирования)
+  client:
+    build: .
+    container_name: client_server_app_client
+    depends_on:
+      - server
+    command: ["./run.sh", "client"]
+    networks:
+      - app_network
+    stdin_open: true
+    tty: true
+
+networks:
+  app_network:
+    driver: bridge
+
+volumes:
+  app_data:
+    driver: local
