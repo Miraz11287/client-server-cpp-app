@@ -1,0 +1,52 @@
+name: Generate Documentation
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  generate-docs:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y build-essential cmake doxygen graphviz
+    
+    - name: Generate documentation
+      run: |
+        chmod +x scripts/generate_docs.sh
+        ./scripts/generate_docs.sh
+    
+    - name: Upload documentation artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: documentation
+        path: docs/doxygen/html/
+        retention-days: 30
+    
+    - name: Comment PR with documentation link
+      if: github.event_name == 'pull_request'
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const fs = require('fs');
+          const path = require('path');
+          
+          // Проверяем, что документация сгенерировалась
+          const docsPath = 'docs/doxygen/html';
+          if (fs.existsSync(docsPath)) {
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '📚 Документация успешно сгенерирована! Проверьте артефакт "documentation" в разделе Actions.'
+            });
+          }

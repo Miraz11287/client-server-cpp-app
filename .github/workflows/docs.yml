@@ -5,10 +5,15 @@ on:
     branches: [ main ]
   release:
     types: [ published ]
+  workflow_dispatch: # Позволяет запускать вручную
 
 jobs:
   deploy-docs:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
     
     steps:
     - name: Checkout code
@@ -24,9 +29,14 @@ jobs:
         chmod +x scripts/generate_docs.sh
         ./scripts/generate_docs.sh
     
-    - name: Deploy to GitHub Pages
-      uses: peaceiris/actions-gh-pages@v3
+    - name: Setup Pages
+      uses: actions/configure-pages@v4
+    
+    - name: Upload artifact
+      uses: actions/upload-pages-artifact@v3
       with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-        publish_dir: ./docs/doxygen/html
-        cname: # Опционально: ваш домен
+        path: ./docs/doxygen/html
+    
+    - name: Deploy to GitHub Pages
+      id: deployment
+      uses: actions/deploy-pages@v4

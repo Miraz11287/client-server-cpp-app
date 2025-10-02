@@ -50,24 +50,12 @@ jobs:
         chmod +x ../scripts/run_tests.sh
         ../scripts/run_tests.sh
     
-    - name: Generate documentation
-      run: |
-        chmod +x scripts/generate_docs.sh
-        ./scripts/generate_docs.sh
-    
     - name: Upload build artifacts
       uses: actions/upload-artifact@v4
       with:
         name: build-${{ matrix.compiler }}-${{ matrix.build_type }}
         path: build/
         retention-days: 7
-    
-    - name: Upload documentation
-      uses: actions/upload-artifact@v4
-      with:
-        name: documentation
-        path: docs/doxygen/html/
-        retention-days: 30
 
   docker-build:
     runs-on: ubuntu-latest
