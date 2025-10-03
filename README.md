@@ -24,6 +24,10 @@
 
 Подробная диаграмма классов доступна в файле [docs/class_diagram.md](docs/class_diagram.md).
 
+### Диаграмма Use Case
+
+Диаграмма Use Case с описанием всех взаимодействий пользователей с системой доступна в файле [docs/use_case_diagram.md](docs/use_case_diagram.md).
+
 ## Требования
 
 - C++17 или выше
@@ -149,6 +153,7 @@ doxygen Doxyfile
 │   └── client/           # Реализация клиента
 ├── docs/                 # Документация
 │   ├── class_diagram.md  # Диаграмма классов
+│   ├── use_case_diagram.md # Диаграмма Use Case
 │   └── doxygen/          # Сгенерированная документация
 └── tests/                # Тесты
     ├── test_cases.md     # Тест-кейсы
